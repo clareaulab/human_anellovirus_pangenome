@@ -1,0 +1,313 @@
+---
+title: "BLANK"
+author: "Jacob Gutierrez"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    theme: yeti
+subtitle: "BLANK"
+---
+
+```{r knitr setup chunk, echo = F}
+## Knitr setupchunk
+knitr::opts_chunk$set(fig.width=12, fig.height=8, echo=TRUE, warning=FALSE, message=FALSE, rows.print=20, eval = TRUE)
+```
+
+
+# Overview {.tabset .tabset-fade .tabset-pills}
+
+This script is expected to run on {BLANK} See sessionInfo for more info.
+
+
+## Purpose   
+
+
+> **Assess BLANK** 
+
+## Motivation
+
+## Research Questions
+
+
+# Analysis 
+
+### Libraries
+
+
+```{r libraries}
+library(data.table) 
+library(dplyr)
+library(ape)
+#library(phangorn)# install.packages("phangorn")
+library(phytools) # install.packages("phytools)
+library(ggtree)
+#library(ggtreeExtra)  #BiocManager::install("ggtreeExtra")
+```
+
+
+```{r}
+simple_anello <- fread("simple_anello_metadata.csv") %>% filter(Accession == cdhit_representative)
+
+genus_ann <- simple_anello %>% select(orf_id, Genus, infer_genus)
+```
+
+
+
+```{r}
+tree <- read.tree("anello_phlyo_V1/trimmed_orf1_cdhit_rep_anelloviridae_061725_orfs.msafaa.treefile")
+```
+
+
+<!-- ```{r, fig.width = 32} -->
+<!-- tree_mid <- midpoint(tree)  # phangorn's midpoint rooting -->
+<!-- plot(tree_mid, cex=0.3) -->
+<!-- ``` -->
+
+```{r}
+#library(phytools)
+tree_mid <- midpoint.root(tree)
+```
+
+```{r, fig.width = 24}
+plot(tree_mid, cex=0.3)
+```
+
+
+
+```{r}
+# compute pairwise patristic (branch length) distances
+D <- cophenetic(tree_mid)
+
+# run hierarchical clustering on the distance matrix
+hc <- hclust(as.dist(D), method="average")
+```
+
+
+
+
+```{r}
+# cut into clusters by distance threshold (e.g., 0.05 substitutions/site)
+#clusters <- cutree(hc, h = 2.5)
+clusters <- cutree(hc, k=40)
+
+# dataframe of results
+cluster_df <- data.frame(
+  tip = names(clusters),
+  cluster = clusters
+)
+
+cluster_df %>% count(cluster) %>% nrow()
+```
+
+
+```{r}
+cluster_df <- cluster_df %>% mutate(cluster = as.factor(cluster))
+cluster_df <- left_join(cluster_df, genus_ann %>% select(tip = orf_id,Genus,infer_genus))
+rownames(cluster_df) <- cluster_df$tip
+
+```
+
+```{r}
+cluster_df %>% count(Genus)
+```
+
+
+
+```{r, fig.height=8, fig.width = 8}
+cl_mat <- cluster_df %>% count(cluster, Genus) %>% tidyr::pivot_wider(names_from = "Genus", values_from = "n", values_fill = 0) %>% as.data.frame()
+
+#cl_mat <- cluster_df %>% count(cluster, infer_genus) %>% tidyr::pivot_wider(names_from = "infer_genus", values_from = "n", values_fill = 0) %>% as.data.frame()
+
+
+rownames(cl_mat) <- cl_mat[,1]
+cl_mat[,1] <- NULL
+cl_mat <- as.matrix(cl_mat)
+
+plt_mat <- cl_mat/rowSums(cl_mat)
+
+pheatmap::pheatmap(plt_mat, display_numbers =cl_mat , main = "ORF1 Phylogenetic Cluster x GenBank Annotation")
+```
+
+
+```{r}
+view_id <- cluster_df %>% filter(cluster == 27) %>% pull(tip)
+simple_anello %>% filter(orf_id %in% view_id) %>% View()
+```
+
+
+
+
+```{r}
+#annotate_tree <- wow %>% dplyr::select(seqid,infer_genus) %>% mutate(seqid = paste0(seqid,"_1"))
+# Assign colors to each genus
+#genus_colors <- RColorBrewer::brewer.pal(n = length(unique(annotate_tree$infer_genus)), name = "Set1")
+#genus_map <- setNames(genus_colors, unique(annotate_tree$infer_genus))
+#show <- viridis(n = 8, option = "H")
+#show %>% scales::show_col()
+show <- c("#30123BFF", "#4777EFFF", "#1BD0D5FF", "#62FC6BFF", "#D2E935FF", 
+"#FE9B2DFF", "#DB3A07FF", "#7A0403FF")
+
+## Maually Set Genus into 
+one <- c("Betatorquevirus","Alphatorquevirus", "Gammatorquevirus")
+#one_c <- RColorBrewer::brewer.pal(n = length(one), name = "Pastel2")
+#one_c <- c("#1B9E77", "#D95F02", "#7570B3") ## DARK2
+#one_c <- c("#B3E2CD", "#FDCDAC", "#CBD5E8") ##pastel2
+one_c <- c("#7A0403FF", "#DB3A07FF", "#FDE725FF")
+names(one_c) <- one
+
+two <- c("Hetorquevirus", "Memtorquevirus", "Samektorquevirus", "Gyrovirus")
+#two_c <-  RColorBrewer::brewer.pal(n = length(two), name = "Set1")
+#catch <- RColorBrewer::brewer.pal(n = 9, name = "Set1")
+#set1 <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999")
+#two_c <- c("#E41A1C", "#377EB8", "#984EA3","#F781BF")
+two_c <- c("#4777EFFF","#62FC6BFF", "#1BD0D5FF", "#F781BF" )
+names(two_c) <- two
+
+three <- c("Unclassified")
+three_c <- c("#666666")
+names(three_c) <- three
+
+genus_map <- c(one_c,two_c,three_c)
+```
+
+
+```{r}
+cluster_df <- cluster_df %>% mutate(Genus = factor(Genus, levels = names(genus_map))) %>% arrange(desc(Genus))
+```
+
+
+```{r}
+library(ggtree)
+library(ggplot2)
+
+
+# # # Plot tree with tips colored by cluster
+# p <- ggtree(tree_mid,layout = "circular") %<+% cluster_df  +
+#   geom_tippoint(aes(color = cluster), size = 2)  +
+#   theme_tree2() +
+#   scale_color_viridis_d(name = "Cluster")
+
+# # Plot tree with tips colored by Genus
+p <- ggtree(tree_mid,layout = "circular") %<+% cluster_df   +
+  geom_tippoint(aes(color = Genus), size = 1.5, alpha = .75)  +
+  theme_tree2() +
+  scale_color_manual(name = "Genus", values = genus_map)
+# 
+# p <- ggtree(tree_mid, layout = "circular") %<+% cluster_df +
+# 
+#   # tip points colored by cluster
+#   geom_tippoint(aes(color = cluster), size = 2) +
+# 
+#   # genus as a colored strip/label bar on the outside
+#   geom_cladelabel(aes(fill = Genus), label = Genus, 
+#                align = TRUE, linetype = NA, size = 2.2, hjust = -0.1) +
+# 
+#   scale_color_viridis_d(name = "Cluster") +
+#   scale_fill_viridis_d(name = "Genus") +
+#   theme(legend.position = "right")
+```
+
+
+```{r}
+print(p)
+```
+
+
+> Spot checking cluster 27 I think those are misannoated Hetorquevirus virus. 
+
+```{r}
+clus_cnt <- cluster_df %>% group_by(cluster) %>% count(Genus) %>% arrange(cluster,desc(n)) %>% mutate(n_c = n())
+
+
+
+clus_cnt <- clus_cnt %>% filter(if_else(n_c == 1, TRUE, Genus != "Unclassified")) %>% slice_head(n = 1)
+## I need to make cluster 27 Hetorquevirus | Cluster 2 one says gamma but my prediction says beta we will go with that 
+clus_cnt <- clus_cnt %>% mutate(Genus = if_else(cluster == 27, "Hetorquevirus", Genus))
+
+## Spot checking the phylogony in itol I can see cluster28 is likely to be Hetorquevirus which is misannotated as Beta
+clus_cnt <- clus_cnt %>% mutate(Genus = if_else(cluster == 28, "Hetorquevirus", Genus))
+
+
+clus_cnt <- clus_cnt %>% dplyr::select(cluster, orf1_genus = Genus)
+
+```
+
+
+```{r}
+cluster_df <- left_join(cluster_df, clus_cnt)
+```
+
+
+```{r, fig.width - 8}
+p <- ggtree(tree_mid,layout = "circular") %<+% cluster_df   +
+  geom_tippoint(aes(color = orf1_genus), size = 1.5, alpha = .75)  +
+  theme_tree2() +
+  scale_color_manual(name = "orf1_genus", values = genus_map)
+
+plot(p)
+```
+
+
+```{r}
+out_df <- cluster_df %>% select(orf_id = tip, phylo_cluster=cluster, orf1_genus)
+fwrite(out_df,"Anello_phlyo_results.csv")
+```
+
+
+```{r}
+simple_anello <- left_join(simple_anello,out_df)
+fwrite(simple_anello,"phylo_simple_anello_metadata.csv")
+```
+
+
+```{r}
+#rep_anello <- simple_anello_meta %>% filter(Accession == cdhit_representative)
+
+#annotate_tree <- rep_anello %>% dplyr::select(seqid=orf_id, infer_genus,Genus,phylo_cluster,orf1_genus)
+annotate_tree <- cluster_df %>% dplyr::select(seqid=tip, infer_genus,Genus,phylo_cluster=cluster,orf1_genus)
+```
+
+
+```{r}
+# Write iTOL COLORSTRIP header
+header <- c(
+  "DATASET_COLORSTRIP",
+  "SEPARATOR TAB",
+  "DATASET_LABEL\tORF1 Genus Annotation",
+  "COLOR\t#ff0000",
+  "STRIP_WIDTH\t25",
+  "MARGIN\t5",
+  "SHOW_INTERNAL\t0",
+  "LEGEND_TITLE\tORF1 Phylogony Genus",
+  paste0("LEGEND_SHAPES\t", paste(rep("1", length(genus_map)), collapse = "\t")),
+  paste0("LEGEND_COLORS\t", paste(genus_map, collapse = "\t")),
+  paste0("LEGEND_LABELS\t", paste(names(genus_map), collapse = "\t")),
+  "DATA"
+)
+
+# Map each sequence ID to its color
+data_lines <- annotate_tree %>%
+  mutate(color = genus_map[orf1_genus]) %>%
+  transmute(line = paste(seqid, color, sep = "\t")) %>%
+  pull(line)
+
+# Combine and write to file
+writeLines(c(header, data_lines), "V2_itol_orf1genus_annotation.txt")
+```
+
+
+# SessionInfo
+<details>
+  <summary>Click for SessionInfo</summary>
+```{r R info}
+sessionInfo()
+```
+</details> 
+
