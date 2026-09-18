@@ -1,0 +1,14 @@
+{
+	"n_targets": 2023,
+	"n_bootstraps": 0,
+	"n_processed": 36109130,
+	"n_pseudoaligned": 2659,
+	"n_unique": 2084,
+	"p_pseudoaligned": 0.0,
+	"p_unique": 0.0,
+	"kallisto_version": "0.52.0",
+	"index_version": 13,
+	"k-mer length": 31,
+	"start_time": "Thu Sep 17 18:18:57 2026",
+	"call": "kallisto quant -i /Users/gutierj6/Documents/MSK/Anello Project Organize/human_anellovirus_pangenome/ref/hardmasked_cdhit_rep_anelloviridae_061725_genomic.k0.52.0.idx -o /Users/gutierj6/Documents/MSK/Anello Project Organize/human_anellovirus_pangenome/example/data/kallisto/SRR32170409 -t 8 /Users/gutierj6/Documents/MSK/Anello Project Organize/human_anellovirus_pangenome/example/data/fastq/SRR32170409_1.fastq /Users/gutierj6/Documents/MSK/Anello Project Organize/human_anellovirus_pangenome/example/data/fastq/SRR32170409_2.fastq"
+}
