@@ -128,6 +128,4 @@ Scripts are in [`construction/`](construction/), numbered in order.
 6. **ORF1 phylogeny** — MAFFT → trimAl → IQ-TREE (BLOSUM62+F+G4, 1000
    bootstraps), then patristic clustering into 40 groups to infer genus. `08`, `09`
 
-The phylogeny step involves manual review of the tree, so it is recorded here
-as provenance rather than as a turnkey rerun — regenerating it would shift the
-underlying tree structure and the cluster assignments that depend on it.
+The phylogeny step involves manual review of the resulting phylogenetic tree, rerunning the phylogony step will retain the global tree structure but the specific clustering creating these results will change. As a result the last script is more of a record of what was done using the underlying data rather than a reproducing the exact results.  
