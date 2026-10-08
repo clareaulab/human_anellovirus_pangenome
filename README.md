@@ -21,9 +21,9 @@ simple_anello_metadata_V2.csv    per-genome annotation (3,545 rows)
 
 ---
 
-## The reference
+## Reference
 
-Everything you need is in [`ref/`](ref/):
+Everything you need to run this workflow is in [`ref/`](ref/):
 
 | File | Purpose |
 |---|---|
@@ -90,12 +90,12 @@ caveats that matter in [`example/README.md`](example/README.md).
 
 ### Quantification directly
 
-The hardmasked FASTA works with any detection strategy, but pseudoalignment is
-the right tool here: it resolves reads across near-identical contigs by EM,
+The hardmasked FASTA works with any detection strategy, but we propose that pseudoalignment is
+the right tool: it resolves reads across near-identical viral contigs by EM,
 with no custom multimapping code.
 
 **The kallisto that builds the index must be the exact version that runs
-quant.**
+quantification.**
 
 ```bash
 module load kallisto/0.48.0
@@ -128,4 +128,6 @@ Scripts are in [`construction/`](construction/), numbered in order.
 6. **ORF1 phylogeny** — MAFFT → trimAl → IQ-TREE (BLOSUM62+F+G4, 1000
    bootstraps), then patristic clustering into 40 groups to infer genus. `08`, `09`
 
-The phylogeny step involves manual review of the resulting phylogenetic tree, rerunning the phylogony step will retain the global tree structure but the specific clustering creating these results will change. As a result the last script is more of a record of what was done using the underlying data rather than a reproducing the exact results.  
+Notes: 
+* If the NCBI dataset collection is rerun more recent accessions will be included and thus everything will change. 
+* The phylogeny step involves manual review of the resulting phylogenetic tree, rerunning the phylogony step will retain the global tree structure but the specific clustering creating these results will change. As a result the last script a record of what was done using the underlying data rather than a reproducing the exact results.  
