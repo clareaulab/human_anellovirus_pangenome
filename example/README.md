@@ -1,4 +1,4 @@
-# Example: anellovirus quantification
+# Example Workflow: Anellovirus Quantification
 
 ```bash
 cd example
@@ -31,18 +31,11 @@ Assume random sampling of a 3.8kb viral genome / 2x150bp read count ~ 13 reads y
 This sample contains 2659 viral reads giving us an estimated 204x genome coverage. 
 
 
-Note: kallisto's EM shares read counts across compatible segments of 4 genomes leading to non-integer read counts
+Notes:
+* We rarely use TPM values as these are not accurate without jointly measuring the host genome/transcriptome.
+* Kallisto's EM algorithm shares read counts across compatible genome segments leading to both non-integer read counts and multiple viral strains appearing in the results.
+* Often it is easier to interpret results by summarizing to the genus level to know which genera are present in your sample. Often many viral strains have a few stray reads in low complexity regions that are often recombined across viral strains, it is sometimes easier to mask strains with low read counts or assign their reads to the top strains. 
 
-## Three Caveats
 
-- **TPM is composition within the anellome, not viral load.** The index holds
-  only anellovirus, so TPM sums to 1e6 even with three reads. Use `est_counts`
-  vs total reads; `02_summarize.R` prints it.
-- **Ignore `p_pseudoaligned` in `run_info.json`.** Kallisto rounds it to one
-  decimal, so this real 0.00736% detection reads `0.0`. Same for the "0.0%
-  mapped" progress meter.
-- **Genus Level Aggregation.** Often it is easier to interpret results by summarizing to the genus level to know which genera are present in your sample. Often many viral strains have a few stray reads in low complexity regions that are often recombined across viral strains, it is sometimes easier to mask strains with low read counts or assign their reads to the top strains. 
-- **Index and quant must use the same kallisto version.** Built here with 0.52.0.
-
-Runtime: index 5 s, quant ~3.5 min on 8 threads. `data/` and `results/` are
-gitignored.
+## Runtime
+index 5 s, quant ~3.5 min on 8 threads. 
